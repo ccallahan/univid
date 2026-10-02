@@ -18,8 +18,14 @@ WORKING = "⏳"
 FAILED = "❌"
 # Headroom under the guild limit for multipart overhead.
 UPLOAD_MARGIN = 256 * 1024
-# Small grey text under each video. <> keeps Discord from previewing the link.
+# Small grey text posted with each video. <> keeps Discord from previewing the link.
 FOOTER = "-# [Share or support univid](<https://linktr.ee/univid_bot>)"
+# Discord rate-limits presence changes, so batch status updates.
+STATUS_INTERVAL = 60
+
+
+def status_text(n: int) -> str:
+    return f"{n} video{'' if n == 1 else 's'} embedded since restart"
 
 
 @dataclass
@@ -34,11 +40,37 @@ class UnividBot(discord.Client):
     def __init__(self, config: Config):
         intents = discord.Intents.default()
         intents.message_content = True
-        super().__init__(intents=intents, allowed_mentions=discord.AllowedMentions.none())
+        super().__init__(
+            intents=intents,
+            allowed_mentions=discord.AllowedMentions.none(),
+            activity=discord.CustomActivity(name=status_text(0)),
+        )
         self.config = config
         self.slots = asyncio.Semaphore(config.max_concurrent)
+        self.embedded = 0
+        # Count currently shown in our status. A fresh session (IDENTIFY) always
+        # sends the constructor's activity, so on_ready resets this to 0.
+        self._shown = 0
+
+    async def setup_hook(self):
+        self._status_task = asyncio.create_task(self._status_loop())
+
+    async def _status_loop(self):
+        await self.wait_until_ready()
+        while not self.is_closed():
+            await asyncio.sleep(STATUS_INTERVAL)
+            if self.embedded == self._shown:
+                continue
+            count = self.embedded
+            try:
+                await self.change_presence(activity=discord.CustomActivity(name=status_text(count)))
+                self._shown = count
+            except Exception:
+                log.exception("failed to update status")
 
     async def on_ready(self):
+        # Fires after every IDENTIFY (not RESUME), which resets our status to 0.
+        self._shown = 0
         log.info("logged in as %s (%s)", self.user, self.user.id)
 
     async def on_message(self, message: discord.Message):
@@ -93,6 +125,7 @@ class UnividBot(discord.Client):
                     file=discord.File(path, filename=f"video{path.suffix}"),
                     mention_author=False,
                 )
+                self.embedded += 1
                 log.info("posted %s (%d bytes)", url, path.stat().st_size)
                 return True
 
