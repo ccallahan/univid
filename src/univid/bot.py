@@ -19,7 +19,7 @@ FAILED = "❌"
 # Headroom under the guild limit for multipart overhead.
 UPLOAD_MARGIN = 256 * 1024
 # Small grey text posted with each video. <> keeps Discord from previewing the link.
-FOOTER = "-# [Share or support univid](<https://linktr.ee/univid_bot>)"
+FOOTER = "-# [Share or support Univid](<https://linktr.ee/univid_bot>)"
 # Discord rate-limits presence changes, so batch status updates.
 STATUS_INTERVAL = 60
 
