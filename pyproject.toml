@@ -1,0 +1,18 @@
+[project]
+name = "univid"
+version = "0.1.0"
+description = "Discord bot that re-hosts social media videos so anyone can watch them"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "discord.py>=2.4",
+    "python-dotenv>=1.0",
+    "yt-dlp[default]",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

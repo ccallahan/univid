@@ -1,0 +1,9 @@
+services:
+  univid:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    # Uncomment to give yt-dlp a logged-in session (set COOKIES_FILE=/secrets/cookies.txt).
+    # Mounted read-write because yt-dlp saves refreshed cookies back to the file.
+    # volumes:
+    #   - ./secrets:/secrets
